@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../thalassa/backend:/app
+      - ../data/duckdb:/data/duckdb
+      - ../data/cache:/data/cache
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DUCKDB_PATH=/data/duckdb/thalassa.duckdb
+    depends_on:
+      - redis
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    command: celery -A workers.celery_app worker --loglevel=info
+    volumes:
+      - ../thalassa/backend:/app
+      - ../data/duckdb:/data/duckdb
+      - ../data/cache:/data/cache
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DUCKDB_PATH=/data/duckdb/thalassa.duckdb
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../thalassa/frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
+volumes:
+  redis_data:

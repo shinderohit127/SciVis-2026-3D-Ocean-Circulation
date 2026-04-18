@@ -1,0 +1,32 @@
+name: thalassa-backend
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - numpy>=1.26
+  - xarray>=2024.1
+  - numba>=0.59
+  - scipy>=1.13
+  - scikit-image>=0.23
+  - scikit-learn>=1.4
+  - pandas>=2.2
+  - pyarrow>=15
+  - matplotlib>=3.8
+  - cartopy>=0.23
+  - jupyter
+  - ipykernel
+  - pip
+  - pip:
+    - fastapi>=0.111
+    - "uvicorn[standard]>=0.29"
+    - openvisuspy
+    - gsw>=3.6.19
+    - "celery[redis]>=5.3"
+    - redis>=5.0
+    - duckdb>=0.10
+    - hdbscan>=0.8
+    - python-multipart
+    - httpx
+    - pytest
+    - pytest-asyncio

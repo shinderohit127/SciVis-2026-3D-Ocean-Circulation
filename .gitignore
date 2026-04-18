@@ -1,0 +1,38 @@
+node_modules/
+.vscode/
+.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+*.so
+.env
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Node / frontend build
+thalassa/frontend/node_modules/
+thalassa/frontend/dist/
+thalassa/frontend/.vite/
+
+# Data volumes — never commit raw ocean data or cache artifacts
+data/duckdb/*.duckdb
+data/cache/
+cache/
+
+# Generated figures (reproducible from notebooks/state)
+figures/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker local secrets
+docker/.env
