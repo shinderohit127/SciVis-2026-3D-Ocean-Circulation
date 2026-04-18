@@ -135,8 +135,10 @@ class ROI:
     @property
     def x1(self) -> int:
         x = lon_to_x(self.lon_max)
-        # 0°E (=360°E) maps to x=0 due to modulo; treat as NX (right edge)
-        return NX if x == 0 and self.lon_max >= 0 and self.lon_min < 0 else x
+        # Any lon_max that wraps to x=0 (e.g. 360°, 0°) but is east of lon_min → NX
+        if x == 0 and self.lon_max > self.lon_min:
+            return NX
+        return x
 
     @property
     def y0(self) -> int:
@@ -242,8 +244,8 @@ class LLC4320Reader:
                 z=[z0, z1],
                 quality=roi.quality,
             )
-        except TypeError:
-            # Some openvisuspy builds expose the dataset as .db
+        except (TypeError, AttributeError):
+            # PelicanDataset wraps the IDX dataset in .db; no top-level .read()
             data = db.db.read(
                 time=roi.timestep,
                 x=[x0, x1],
@@ -306,15 +308,18 @@ class LLC4320Reader:
         come back horizontally flipped.
         """
         logger.info("Running orientation verification (quality=%d)...", quality)
+        # Use [0, 360) range to avoid date-line wrap (lon=-180 and lon=180 both
+        # map to x=8640 in the [0,360) grid, making x0==x1 which OpenVisus rejects).
         roi = ROI(lat_min=-80.0, lat_max=80.0,
-                  lon_min=-180.0, lon_max=180.0,
+                  lon_min=0.0, lon_max=360.0,
                   depth_min_m=0.0, depth_max_m=5.0,
                   timestep=timestep, quality=quality)
         data = self.read(roi, "theta")
         surface = data[0]  # (n_y, n_x)
 
         n_y, n_x = surface.shape
-        lons = np.linspace(-180.0, 180.0, n_x, endpoint=False)
+        # Lons in [0, 360); cartopy PlateCarree accepts these directly.
+        lons = np.linspace(0.0, 360.0, n_x, endpoint=False)
         lats = np.linspace(-80.0, 80.0, n_y, endpoint=False)
 
         masked = surface.astype(float)
