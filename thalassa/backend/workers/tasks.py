@@ -8,6 +8,13 @@ GET /api/jobs/{task_id} to retrieve completed results.
 from __future__ import annotations
 
 import logging
+import sys
+from pathlib import Path
+
+# Ensure backend root is on sys.path in every forked worker process.
+_BACKEND = str(Path(__file__).resolve().parent.parent)
+if _BACKEND not in sys.path:
+    sys.path.insert(0, _BACKEND)
 
 import numpy as np
 

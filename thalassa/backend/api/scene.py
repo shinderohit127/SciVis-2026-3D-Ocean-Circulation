@@ -43,7 +43,14 @@ async def scene_isopycnal(req: IsopycnalRequest) -> JobStatus:
     if not _CELERY_AVAILABLE:
         raise HTTPException(status_code=503, detail="Celery not available")
 
-    task = extract_isopycnal_async.delay(req.model_dump())
+    try:
+        task = extract_isopycnal_async.delay(req.model_dump())
+    except Exception as exc:
+        log.error("Failed to dispatch isopycnal task: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail=f"Could not queue job — is Redis running? ({exc})",
+        )
     log.info(
         "Dispatched isopycnal task %s: σ₀=%.2f lat=[%s,%s] t=%d",
         task.id, req.sigma0_value, req.roi.lat_min, req.roi.lat_max, req.roi.timestep,
