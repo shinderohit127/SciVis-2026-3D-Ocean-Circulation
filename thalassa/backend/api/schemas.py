@@ -1,5 +1,7 @@
 """Shared Pydantic schemas for THALASSA API responses."""
 
+from typing import Optional
+
 from pydantic import BaseModel, field_validator, model_validator
 
 
@@ -116,3 +118,87 @@ class DensityResponse(BaseModel):
     fields: dict[str, FieldStats]
     metric_version: str
     elapsed_ms: int
+
+
+# ── Overview endpoint (Week 5-6) ──────────────────────────────────────────────
+
+_VALID_BASINS  = {"north_atlantic", "southern_ocean", "equatorial"}
+_VALID_METRICS = {"sigma0", "compensation_index", "vertical_exchange", "rho_thermal", "rho_haline"}
+
+
+class OverviewRequest(BaseModel):
+    """Request body for POST /api/overview."""
+    basin: str = "north_atlantic"
+    timestep: int = 0
+    metric: str = "sigma0"
+
+    @field_validator("basin")
+    @classmethod
+    def basin_valid(cls, v: str) -> str:
+        if v not in _VALID_BASINS:
+            raise ValueError(f"basin must be one of {sorted(_VALID_BASINS)}")
+        return v
+
+    @field_validator("metric")
+    @classmethod
+    def metric_valid(cls, v: str) -> str:
+        if v not in _VALID_METRICS:
+            raise ValueError(f"metric must be one of {sorted(_VALID_METRICS)}")
+        return v
+
+
+class DepthBandSummary(BaseModel):
+    band: str                   # "surface" | "thermocline" | "deep" | "abyss"
+    depth_range: list[float]    # [z_lo, z_hi] metres
+    mean_map: list              # 2D list (ny, nx) depth-mean metric values
+    stats: dict[str, float]     # min, max, mean, std
+
+
+class OverviewResponse(BaseModel):
+    """Response from POST /api/overview."""
+    basin: str
+    metric: str
+    timestep: int
+    quality: int
+    shape: dict[str, int]
+    lats: list[float]
+    lons: list[float]
+    depth_bands: list[DepthBandSummary]
+    elapsed_ms: int
+
+
+# ── Vertical exchange endpoint (Week 5-6) ─────────────────────────────────────
+
+class VerticalExchangeRequest(BaseModel):
+    """Request body for POST /api/derived/vertical_exchange."""
+    roi: ROIRequest
+    n2_ref_s2: float = 1e-5   # N² reference threshold in s⁻²
+
+
+class VerticalExchangeResponse(BaseModel):
+    """Response from POST /api/derived/vertical_exchange."""
+    roi: ROIRequest
+    stats: dict[str, float]     # min, max, mean, std, p95
+    surface_slice: list         # 2D list (shallowest z level)
+    event_fraction: float       # fraction of voxels above 95th-percentile threshold
+    metric_version: str
+    elapsed_ms: int
+
+
+# ── Scene / isopycnal endpoint (Week 5-6) ─────────────────────────────────────
+
+class IsopycnalRequest(BaseModel):
+    """Request body for POST /api/scene/isopycnal."""
+    roi: ROIRequest
+    sigma0_value: float
+    color_by: Optional[str] = None   # "CT" | "SA" | "alpha" | "beta" | None
+
+
+# ── Async job polling (Week 5-6) ──────────────────────────────────────────────
+
+class JobStatus(BaseModel):
+    """Response from GET /api/jobs/{job_id}."""
+    job_id: str
+    status: str               # "queued" | "running" | "complete" | "failed"
+    result: Optional[dict] = None
+    error: Optional[str] = None
