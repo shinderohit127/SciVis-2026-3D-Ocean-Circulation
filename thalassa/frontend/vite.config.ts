@@ -12,4 +12,19 @@ export default defineConfig({
       },
     },
   },
+  optimizeDeps: {
+    // maplibre-gl ships its own web worker; exclude from pre-bundling
+    exclude: ['maplibre-gl'],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        // Keep maplibre in its own chunk to avoid timeouts
+        manualChunks: {
+          maplibre: ['maplibre-gl'],
+          plotly: ['plotly.js', 'react-plotly.js'],
+        },
+      },
+    },
+  },
 })
