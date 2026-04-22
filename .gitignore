@@ -25,7 +25,7 @@ thalassa/frontend/.vite/
 # Data volumes — never commit raw ocean data or cache artifacts
 data/duckdb/*.duckdb
 data/cache/
-cache/
+/cache/
 
 # Generated figures (reproducible from notebooks/state)
 figures/

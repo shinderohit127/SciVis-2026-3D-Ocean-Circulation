@@ -4,12 +4,14 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from api.derived import router as derived_router
 from api.metadata import router as metadata_router
+from api.roi import router as roi_router
 
 app = FastAPI(
     title="THALASSA API",
     description="Multiscale visual analytics backend for ECCO LLC4320 ocean circulation.",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 app.add_middleware(
@@ -20,8 +22,10 @@ app.add_middleware(
 )
 
 app.include_router(metadata_router, prefix="/api")
+app.include_router(roi_router, prefix="/api")
+app.include_router(derived_router, prefix="/api")
 
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok", "version": "0.2.0"}

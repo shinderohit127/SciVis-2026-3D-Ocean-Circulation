@@ -24,8 +24,8 @@ async def test_metadata_grid_dimensions():
         response = await client.get("/api/metadata")
     data = response.json()
     assert data["grid"]["nz"] == 90
-    assert data["grid"]["nx"] == 12960
-    assert data["grid"]["ny"] == 17280
+    assert data["grid"]["nx"] == 17280   # longitude pixels
+    assert data["grid"]["ny"] == 12960   # latitude pixels
 
 
 @pytest.mark.asyncio

@@ -30,7 +30,7 @@ _METADATA = MetadataResponse(
             url="pelican://osg-htc.org/nasa/nsdf/climate2/llc4320/idx/w/w_llc4320_x_y_depth.idx",
         ),
     ],
-    grid=GridInfo(nx=12960, ny=17280, nz=90),
+    grid=GridInfo(nx=17280, ny=12960, nz=90),
     timesteps=TimestepInfo(
         count=10312,
         start="2011-09-10T00:00:00Z",
