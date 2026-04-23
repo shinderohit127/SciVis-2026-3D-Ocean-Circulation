@@ -6,6 +6,8 @@ interface Props {
   isLoading: boolean
 }
 
+const KM_PER_DEG_LAT = 111.32
+
 // Minimal perspective + orbit renderer using raw WebGL.
 // vtk.js is reserved for Week 11-12 quality pass; this handles the contest demo.
 function buildRenderer(canvas: HTMLCanvasElement) {
@@ -36,6 +38,9 @@ function buildRenderer(canvas: HTMLCanvasElement) {
     }
   `
 
+  // UNSIGNED_INT indices require this extension in WebGL1
+  const extUint32 = gl.getExtension('OES_element_index_uint')
+
   const compile = (type: number, src: string) => {
     const sh = gl.createShader(type)!
     gl.shaderSource(sh, src); gl.compileShader(sh)
@@ -46,7 +51,7 @@ function buildRenderer(canvas: HTMLCanvasElement) {
   gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, frag))
   gl.linkProgram(prog)
 
-  return { gl, prog }
+  return { gl, prog, extUint32 }
 }
 
 // Build a 4×4 MVP matrix (no external deps).
@@ -99,7 +104,7 @@ function mvp(
 
 export default function IsopycnalView({ mesh, isLoading }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const stateRef = useRef({ rotX: 0.4, rotY: 0.3, zoom: 3, dragging: false, lastX: 0, lastY: 0 })
+  const stateRef = useRef({ rotX: 0.62, rotY: -0.55, zoom: 2.15, dragging: false, lastX: 0, lastY: 0 })
   const rafRef = useRef<number>(0)
 
   useEffect(() => {
@@ -108,39 +113,61 @@ export default function IsopycnalView({ mesh, isLoading }: Props) {
 
     const ctx = buildRenderer(canvas)
     if (!ctx) return
-    const { gl, prog } = ctx
+    const { gl, prog, extUint32 } = ctx
 
-    // Normalize coordinates: lon→[-1,1], lat→[-1,1], depth→[0,1]
+    // Convert geographic coordinates into comparable local units before scaling.
+    // Raw lon/lat degrees versus depth in metres collapses the mesh into a line.
     const verts = mesh.vertices
-    const lons  = verts.map(v => v[0])
-    const lats  = verts.map(v => v[1])
-    const deps  = verts.map(v => v[2])
+    const lons = verts.map((v) => v[0])
+    const lats = verts.map((v) => v[1])
+    const deps = verts.map((v) => v[2])
 
-    const lonRange = Math.max(...lons) - Math.min(...lons) || 1
-    const latRange = Math.max(...lats) - Math.min(...lats) || 1
-    const depRange = Math.max(...deps) - Math.min(...deps) || 1
-    const lonMid = (Math.max(...lons) + Math.min(...lons)) / 2
-    const latMid = (Math.max(...lats) + Math.min(...lats)) / 2
-    const depMid = (Math.max(...deps) + Math.min(...deps)) / 2
-    const scale = Math.max(lonRange, latRange, depRange)
+    const lonMin = Math.min(...lons)
+    const lonMax = Math.max(...lons)
+    const latMin = Math.min(...lats)
+    const latMax = Math.max(...lats)
+    const depMin = Math.min(...deps)
+    const depMax = Math.max(...deps)
+
+    const lonMid = (lonMax + lonMin) / 2
+    const latMid = (latMax + latMin) / 2
+    const depMid = (depMax + depMin) / 2
+    const cosLat = Math.max(0.2, Math.cos((latMid * Math.PI) / 180))
+
+    const localX = verts.map((v) => (v[0] - lonMid) * KM_PER_DEG_LAT * cosLat)
+    const localY = verts.map((v) => (v[1] - latMid) * KM_PER_DEG_LAT)
+    const localZ = verts.map((v) => -(v[2] - depMid) / 1000)
+
+    const xRange = Math.max(...localX) - Math.min(...localX) || 1
+    const yRange = Math.max(...localY) - Math.min(...localY) || 1
+    const zRange = Math.max(...localZ) - Math.min(...localZ) || 1
+    const horizontalRange = Math.max(xRange, yRange)
+    const verticalScale = Math.min(12, Math.max(1.8, (horizontalRange * 0.42) / zRange))
+    const fitRange = Math.max(xRange, yRange, zRange * verticalScale) || 1
 
     const posData = new Float32Array(verts.length * 3)
     for (let i = 0; i < verts.length; i++) {
-      posData[i*3]   = (verts[i][0] - lonMid) / scale
-      posData[i*3+1] = (verts[i][1] - latMid) / scale
-      posData[i*3+2] = -(verts[i][2] - depMid) / scale  // flip depth so surface is up
+      posData[i * 3] = (localX[i] / fitRange) * 2.15
+      posData[i * 3 + 1] = (localY[i] / fitRange) * 2.15
+      posData[i * 3 + 2] = ((localZ[i] * verticalScale) / fitRange) * 2.15
     }
 
     const colorData = new Float32Array(verts.length)
     const cv = mesh.color_values
     let cMin = 0, cRange = 1
     if (cv && cv.length === verts.length) {
-      const valid = cv.filter(isFinite)
-      cMin = Math.min(...valid); cRange = Math.max(...valid) - cMin || 1
+      const valid = cv.filter((value) => Number.isFinite(value) && value !== 0)
+      if (valid.length) {
+        cMin = Math.min(...valid)
+        cRange = Math.max(...valid) - cMin || 1
+      }
       for (let i = 0; i < cv.length; i++) colorData[i] = cv[i]
     }
 
-    const idxData = new Uint32Array(mesh.faces.flat())
+    const idxData = extUint32
+      ? new Uint32Array(mesh.faces.flat())
+      : new Uint16Array(mesh.faces.flat())
+    const idxType = extUint32 ? gl.UNSIGNED_INT : gl.UNSIGNED_SHORT
 
     const posBuf = gl.createBuffer()!
     gl.bindBuffer(gl.ARRAY_BUFFER, posBuf)
@@ -164,7 +191,9 @@ export default function IsopycnalView({ mesh, isLoading }: Props) {
 
     const draw = () => {
       const w = canvas.clientWidth, h = canvas.clientHeight
-      canvas.width = w; canvas.height = h
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w; canvas.height = h
+      }
       gl.viewport(0, 0, w, h)
       gl.clearColor(0.04, 0.09, 0.16, 1)
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
@@ -186,7 +215,7 @@ export default function IsopycnalView({ mesh, isLoading }: Props) {
       gl.vertexAttribPointer(aColor, 1, gl.FLOAT, false, 0, 0)
 
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuf)
-      gl.drawElements(gl.TRIANGLES, idxData.length, gl.UNSIGNED_INT, 0)
+      gl.drawElements(gl.TRIANGLES, idxData.length, idxType, 0)
 
       rafRef.current = requestAnimationFrame(draw)
     }
@@ -229,7 +258,7 @@ export default function IsopycnalView({ mesh, isLoading }: Props) {
   if (!mesh) {
     return (
       <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#2a6a9c', fontSize:12, gap:6 }}>
-        <span style={{ fontSize:14, color:'#1a4a7c' }}>σ₀ Isopycnal Surface</span>
+        <span style={{ fontSize:14, color:'#6aaad4' }}>σ₀ Isopycnal Surface</span>
         <span>Set ROI &amp; σ₀ value, then wait for job to complete</span>
       </div>
     )

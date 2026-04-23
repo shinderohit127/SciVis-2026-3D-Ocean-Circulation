@@ -4,6 +4,7 @@ import OverviewMap from '../components/OverviewMap'
 import IsopycnalView from '../components/IsopycnalView'
 import TSPhaseSpace from '../components/TSPhaseSpace'
 import StatusBar from '../components/StatusBar'
+import PanelBoundary from '../components/PanelBoundary'
 import { useStore } from '../state/store'
 import { useIsopycnalJob } from '../api/isopycnal'
 
@@ -28,23 +29,30 @@ export default function MainLayout() {
         <div style={{
           flex: 1,
           display: 'grid',
+          height: '100%',
           gridTemplateColumns: '1fr 1fr',
-          gridTemplateRows: '55% 45%',
+          gridTemplateRows: '55fr 45fr',
           minWidth: 0,
         }}>
           {/* Top-left: overview map */}
           <div style={{ borderRight: '1px solid #112240', borderBottom: '1px solid #112240', overflow: 'hidden' }}>
-            <OverviewMap />
+            <PanelBoundary label="Overview Map">
+              <OverviewMap />
+            </PanelBoundary>
           </div>
 
           {/* Top-right: 3D isopycnal */}
           <div style={{ borderBottom: '1px solid #112240', overflow: 'hidden' }}>
-            <IsopycnalView mesh={mesh} isLoading={isLoading} />
+            <PanelBoundary label="Isopycnal View">
+              <IsopycnalView mesh={mesh} isLoading={isLoading} />
+            </PanelBoundary>
           </div>
 
           {/* Bottom: T-S phase space (spans both columns) */}
           <div style={{ gridColumn: '1 / -1', overflow: 'hidden' }}>
-            <TSPhaseSpace />
+            <PanelBoundary label="T-S Phase Space">
+              <TSPhaseSpace />
+            </PanelBoundary>
           </div>
         </div>
       </div>

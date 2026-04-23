@@ -39,3 +39,12 @@ docker/.env
 
 # Gitignore for local development secrets
 .gitignore
+# Added by code-review-graph
+.code-review-graph/
+
+graphify-out/
+.mcp.json
+.opencode.json
+CLAUDE.md
+.codex
+.logs/

@@ -3,16 +3,21 @@ import axios from 'axios'
 
 export interface DepthBandSummary {
   band: string
-  depth_range_m: [number, number]
-  stats: { min: number; max: number; mean: number; std: number; p95: number }
-  surface_slice: number[][] | null
+  depth_range: [number, number]
+  mean_map: number[][]
+  stats: { min: number; max: number; mean: number; std: number }
 }
 
 export interface OverviewResponse {
   basin: string
   metric: string
+  timestep: number
+  quality: number
+  shape: { nz: number; ny: number; nx: number }
+  lats: number[]
+  lons: number[]
   depth_bands: DepthBandSummary[]
-  cached: boolean
+  elapsed_ms: number
 }
 
 async function fetchOverview(basin: string, metric: string): Promise<OverviewResponse> {
@@ -20,7 +25,7 @@ async function fetchOverview(basin: string, metric: string): Promise<OverviewRes
   return data
 }
 
-export function useOverview(basin = 'global', metric = 'sigma0') {
+export function useOverview(basin = 'north_atlantic', metric = 'sigma0') {
   return useQuery({
     queryKey: ['overview', basin, metric],
     queryFn: () => fetchOverview(basin, metric),

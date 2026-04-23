@@ -13,8 +13,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    // maplibre-gl ships its own web worker; exclude from pre-bundling
-    exclude: ['maplibre-gl'],
+    include: ['maplibre-gl'],
   },
   build: {
     rollupOptions: {
