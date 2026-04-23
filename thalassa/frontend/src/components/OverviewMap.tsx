@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback, useMemo } from 'react'
 import maplibregl, { type StyleSpecification } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useStore } from '../state/store'
@@ -275,15 +275,57 @@ export default function OverviewMap() {
     else map.once('load', onLoad)
   }, [overview])
 
+  // Compute σ₀ range from overview data for legend
+  const sigma0Range = useMemo(() => {
+    if (!overview) return null
+    const surface = overview.depth_bands.find(b => b.band === 'surface')
+    if (!surface) return null
+    return { min: surface.stats.min, max: surface.stats.max }
+  }, [overview])
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
+
+      {/* Panel title */}
       <div style={{
-        position: 'absolute', top: 8, left: 8, background: 'rgba(6,15,26,0.75)',
-        color: '#6aaad4', fontSize: 10, padding: '3px 6px', borderRadius: 3, pointerEvents: 'none',
+        position: 'absolute', top: 8, left: 8,
+        background: 'rgba(6,15,26,0.82)', color: '#6aaad4',
+        fontSize: 11, fontWeight: 600, padding: '4px 8px',
+        borderRadius: 4, pointerEvents: 'none', letterSpacing: '0.03em',
       }}>
-        Click map to re-center ROI
+        Surface σ₀ — North Atlantic
       </div>
+
+      {/* Click hint */}
+      <div style={{
+        position: 'absolute', top: 34, left: 8,
+        background: 'rgba(6,15,26,0.7)', color: '#4a8ab4',
+        fontSize: 10, padding: '2px 6px', borderRadius: 3, pointerEvents: 'none',
+      }}>
+        Click to re-center ROI
+      </div>
+
+      {/* σ₀ color scale legend */}
+      {sigma0Range && (
+        <div style={{
+          position: 'absolute', bottom: 28, left: 8,
+          background: 'rgba(6,15,26,0.82)', borderRadius: 4,
+          padding: '5px 8px', pointerEvents: 'none', minWidth: 160,
+        }}>
+          <div style={{ fontSize: 10, color: '#6aaad4', marginBottom: 3 }}>
+            Potential density σ₀ (kg m⁻³)
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 9, color: '#4a8ab4' }}>{sigma0Range.min.toFixed(2)}</span>
+            <div style={{
+              flex: 1, height: 8, borderRadius: 2,
+              background: 'linear-gradient(to right, rgb(68,1,84) 0%, rgb(59,82,139) 25%, rgb(33,145,140) 50%, rgb(94,201,98) 75%, rgb(253,231,37) 100%)',
+            }} />
+            <span style={{ fontSize: 9, color: '#4a8ab4' }}>{sigma0Range.max.toFixed(2)}</span>
+          </div>
+        </div>
+      )}
       {isLoading && (
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',

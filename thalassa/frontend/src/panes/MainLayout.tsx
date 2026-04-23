@@ -44,7 +44,7 @@ export default function MainLayout() {
           {/* Top-right: 3D isopycnal */}
           <div style={{ borderBottom: '1px solid #112240', overflow: 'hidden' }}>
             <PanelBoundary label="Isopycnal View">
-              <IsopycnalView mesh={mesh} isLoading={isLoading} />
+              <IsopycnalView mesh={mesh} isLoading={isLoading} colorBy={colorBy} />
             </PanelBoundary>
           </div>
 

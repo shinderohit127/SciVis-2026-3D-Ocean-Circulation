@@ -1,9 +1,21 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useMemo } from 'react'
 import type { IsopycnalMesh } from '../api/isopycnal'
+import type { ColorBy } from '../state/store'
 
 interface Props {
   mesh: IsopycnalMesh | null
   isLoading: boolean
+  colorBy: ColorBy
+}
+
+const VIRIDIS_CSS =
+  'linear-gradient(to right, rgb(68,1,84) 0%, rgb(59,82,139) 25%, rgb(33,145,140) 50%, rgb(94,201,98) 75%, rgb(253,231,37) 100%)'
+
+const COLOR_LABEL: Record<string, string> = {
+  CT: 'Conservative Temp. (°C)',
+  SA: 'Absolute Salinity (g kg⁻¹)',
+  alpha: 'Thermal Expansion α',
+  beta: 'Haline Contraction β',
 }
 
 const KM_PER_DEG_LAT = 111.32
@@ -102,7 +114,7 @@ function mvp(
   return new Float32Array(mul(mul(mv, tz), p))
 }
 
-export default function IsopycnalView({ mesh, isLoading }: Props) {
+export default function IsopycnalView({ mesh, isLoading, colorBy }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stateRef = useRef({ rotX: 0.62, rotY: -0.55, zoom: 2.15, dragging: false, lastX: 0, lastY: 0 })
   const rafRef = useRef<number>(0)
@@ -247,49 +259,108 @@ export default function IsopycnalView({ mesh, isLoading }: Props) {
     stateRef.current.zoom = Math.max(1, Math.min(20, stateRef.current.zoom + e.deltaY * 0.005))
   }
 
+  // Compute color range for the legend from live mesh data
+  const colorRange = useMemo(() => {
+    if (!mesh?.color_values?.length || !colorBy) return null
+    const valid = mesh.color_values.filter(v => Number.isFinite(v) && v !== 0)
+    if (!valid.length) return null
+    valid.sort((a, b) => a - b)
+    return {
+      min: valid[Math.floor((valid.length - 1) * 0.02)],
+      max: valid[Math.floor((valid.length - 1) * 0.98)],
+    }
+  }, [mesh?.color_values, colorBy])
+
   if (isLoading) {
     return (
-      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#2a6a9c', fontSize:13 }}>
+      <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#2a6a9c', fontSize:13, gap:8 }}>
+        <span style={{ fontSize:14, color:'#6aaad4' }}>σ₀ Isopycnal Surface</span>
         <span>Computing isopycnal surface…</span>
+        <span style={{ fontSize:10, color:'#1a4a6c' }}>Marching cubes on LLC4320 data</span>
       </div>
     )
   }
 
   if (!mesh) {
     return (
-      <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#2a6a9c', fontSize:12, gap:6 }}>
-        <span style={{ fontSize:14, color:'#6aaad4' }}>σ₀ Isopycnal Surface</span>
-        <span>Set ROI &amp; σ₀ value, then wait for job to complete</span>
+      <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#2a6a9c', fontSize:12, gap:8 }}>
+        <span style={{ fontSize:15, color:'#6aaad4' }}>σ₀ Isopycnal Surface</span>
+        <span>Set ROI &amp; σ₀ in the sidebar, then the surface will auto-compute</span>
+        <span style={{ fontSize:10, color:'#1a4a6c', textAlign:'center', maxWidth:260 }}>
+          An isopycnal is a surface of constant potential density. Water on the same
+          isopycnal mixes freely; crossing one costs energy.
+        </span>
       </div>
     )
   }
 
   if (mesh.vertex_count === 0) {
     return (
-      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#f0a020', fontSize:12 }}>
-        No isopycnal surface found at σ₀ = {mesh.isovalue} in this ROI
+      <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#f0a020', fontSize:12, gap:6 }}>
+        <span>No isopycnal found at σ₀ = {mesh.isovalue} kg/m³</span>
+        <span style={{ fontSize:10, color:'#2a6a9c' }}>Try a different σ₀ value or expand the depth range</span>
       </div>
     )
   }
 
   return (
-    <div style={{ width:'100%', height:'100%', position:'relative' }}>
+    <div style={{ width:'100%', height:'100%', position:'relative', display:'flex', flexDirection:'column' }}>
+      {/* Panel title bar */}
+      <div style={{
+        flexShrink: 0, padding: '4px 8px',
+        background: 'rgba(6,15,26,0.9)', borderBottom: '1px solid #112240',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        pointerEvents: 'none',
+      }}>
+        <span style={{ fontSize: 11, color: '#6aaad4', fontWeight: 600, letterSpacing: '0.04em' }}>
+          Isopycnal Surface — σ₀ = {mesh.isovalue} kg m⁻³
+        </span>
+        <span style={{ fontSize: 10, color: '#2a6a9c' }}>
+          {mesh.vertex_count.toLocaleString()} vertices
+        </span>
+      </div>
+
+      {/* WebGL canvas */}
       <canvas
         ref={canvasRef}
-        style={{ width:'100%', height:'100%', cursor:'grab', display:'block' }}
+        style={{ flex: 1, width:'100%', cursor:'grab', display:'block', minHeight:0 }}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseUp}
         onWheel={onWheel}
       />
+
+      {/* Interaction hint */}
       <div style={{
-        position:'absolute', bottom:8, left:8,
-        background:'rgba(6,15,26,0.75)', color:'#6aaad4',
+        position:'absolute', bottom: colorRange ? 52 : 8, left:8,
+        background:'rgba(6,15,26,0.75)', color:'#4a8ab4',
         fontSize:10, padding:'3px 6px', borderRadius:3, pointerEvents:'none',
       }}>
-        σ₀ = {mesh.isovalue} · drag to rotate · scroll to zoom
+        Drag to rotate · Scroll to zoom
       </div>
+
+      {/* Viridis color legend */}
+      {colorRange && colorBy && (
+        <div style={{
+          position:'absolute', bottom:8, left:8, right:8,
+          background:'rgba(6,15,26,0.82)', borderRadius:4,
+          padding:'5px 8px', pointerEvents:'none',
+        }}>
+          <div style={{ fontSize:10, color:'#6aaad4', marginBottom:3 }}>
+            {COLOR_LABEL[colorBy] ?? colorBy}
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+            <span style={{ fontSize:9, color:'#4a8ab4', minWidth:36 }}>
+              {colorRange.min.toFixed(1)}
+            </span>
+            <div style={{ flex:1, height:8, borderRadius:2, background: VIRIDIS_CSS }} />
+            <span style={{ fontSize:9, color:'#4a8ab4', minWidth:36, textAlign:'right' }}>
+              {colorRange.max.toFixed(1)}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -115,8 +115,8 @@ export default function TSPhaseSpace() {
         plot_bgcolor: '#060f1a',
         margin: { l: 68, r: 28, t: 38, b: 60 },
         title: {
-          text: 'T–S Phase Space  (lasso to set σ₀)',
-          font: { color: '#6aaad4', size: 13 },
+          text: 'T–S Diagram — each point is one ocean grid cell, colored by σ₀  ·  Lasso a cluster to target that density layer',
+          font: { color: '#6aaad4', size: 11 },
           x: 0.5,
           y: 0.97,
         },
