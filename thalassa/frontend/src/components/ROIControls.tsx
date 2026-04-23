@@ -7,22 +7,22 @@ const s: Record<string, React.CSSProperties> = {
     width: 220,
     minWidth: 220,
     padding: '0.75rem',
-    background: '#0a1929',
-    color: '#e0f0ff',
+    background: 'var(--bg-panel)',
+    color: 'var(--text)',
     display: 'flex',
     flexDirection: 'column',
     gap: '0.6rem',
     fontSize: 12,
     overflowY: 'auto',
-    borderRight: '1px solid #1a3a5c',
+    borderRight: '1px solid var(--border)',
   },
-  label: { display: 'block', marginBottom: 2, color: '#6aaad4', fontSize: 11 },
-  hint: { fontSize: 10, color: '#2a5a7c', marginTop: 3, lineHeight: 1.4 },
+  label: { display: 'block', marginBottom: 2, color: 'var(--accent-strong)', fontSize: 11 },
+  hint: { fontSize: 10, color: 'var(--text-muted)', marginTop: 3, lineHeight: 1.4 },
   input: {
     width: '100%',
-    background: '#112240',
-    border: '1px solid #1e4976',
-    color: '#e0f0ff',
+    background: 'var(--bg-panel-alt)',
+    border: '1px solid var(--border-strong)',
+    color: 'var(--text-strong)',
     padding: '3px 6px',
     borderRadius: 3,
     boxSizing: 'border-box' as const,
@@ -34,12 +34,12 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 10,
     textTransform: 'uppercase' as const,
     letterSpacing: '0.08em',
-    color: '#2a6a9c',
-    borderBottom: '1px solid #112240',
+    color: 'var(--info)',
+    borderBottom: '1px solid var(--border)',
     paddingBottom: 3,
     marginBottom: 4,
   },
-  divider: { borderTop: '1px solid #0d2035', margin: '2px 0' },
+  divider: { borderTop: '1px solid var(--border)', margin: '2px 0' },
 }
 
 export default function ROIControls({ onApply }: { onApply?: () => void }) {
@@ -50,10 +50,10 @@ export default function ROIControls({ onApply }: { onApply?: () => void }) {
 
       {/* Header */}
       <div style={{ marginBottom: 4 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: '#40a0e0', letterSpacing: '0.04em' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent-strong)', letterSpacing: '0.04em' }}>
           3D Ocean Circulation
         </div>
-        <div style={{ fontSize: 10, color: '#2a6a9c', marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: 'var(--info)', marginTop: 2 }}>
           ECCO LLC4320 · IEEE SciVis 2026
         </div>
       </div>
@@ -62,7 +62,7 @@ export default function ROIControls({ onApply }: { onApply?: () => void }) {
 
       {/* ROI section */}
       <div style={{ ...s.sectionTitle, marginBottom: 6 }}>Region of Interest</div>
-      <div style={{ fontSize: 10, color: '#2a5a7c', marginTop: -4, marginBottom: 4, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: -4, marginBottom: 4, lineHeight: 1.4 }}>
         Drag the map to re-center, or type coordinates directly.
       </div>
 
@@ -139,7 +139,7 @@ export default function ROIControls({ onApply }: { onApply?: () => void }) {
           An isopycnal is a surface where seawater has the same potential density.
           Water on the same isopycnal mixes easily; crossing one requires energy.
         </div>
-        <div style={{ ...s.hint, marginTop: 4, borderLeft: '2px solid #1a4a6c', paddingLeft: 5 }}>
+        <div style={{ ...s.hint, marginTop: 4, borderLeft: '2px solid var(--info)', paddingLeft: 5 }}>
           Typical ranges — surface warm water: 24–26 · thermocline: 26–27.5 ·
           deep cold water: 27.5–28
         </div>
@@ -165,8 +165,8 @@ export default function ROIControls({ onApply }: { onApply?: () => void }) {
       {onApply && (
         <button
           style={{
-            width: '100%', padding: '5px 8px', background: '#1a5f9c',
-            border: 'none', borderRadius: 3, color: '#e0f0ff',
+            width: '100%', padding: '5px 8px', background: 'var(--accent)',
+            border: '1px solid var(--accent-strong)', borderRadius: 3, color: '#fffaf2',
             fontSize: 11, cursor: 'pointer', marginTop: 4,
           }}
           onClick={onApply}

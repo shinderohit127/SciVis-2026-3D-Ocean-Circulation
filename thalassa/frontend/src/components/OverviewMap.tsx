@@ -129,17 +129,17 @@ export default function OverviewMap() {
         },
       },
       layers: [
-        { id: 'bg', type: 'background', paint: { 'background-color': '#081521' } },
+        { id: 'bg', type: 'background', paint: { 'background-color': '#e9decc' } },
         {
           id: 'osm-raster',
           type: 'raster',
           source: 'osm',
           paint: {
-            'raster-opacity': 0.88,
-            'raster-saturation': -0.35,
-            'raster-contrast': 0.18,
-            'raster-brightness-min': 0.15,
-            'raster-brightness-max': 0.88,
+            'raster-opacity': 0.8,
+            'raster-saturation': -0.55,
+            'raster-contrast': 0.08,
+            'raster-brightness-min': 0.3,
+            'raster-brightness-max': 0.98,
           },
         },
       ],
@@ -167,8 +167,8 @@ export default function OverviewMap() {
         type: 'line',
         source: 'graticule',
         paint: {
-          'line-color': '#7ca7c8',
-          'line-opacity': 0.28,
+          'line-color': '#9d8d74',
+          'line-opacity': 0.36,
           'line-width': 1,
         },
       })
@@ -182,13 +182,13 @@ export default function OverviewMap() {
         id: 'roi-fill',
         type: 'fill',
         source: 'roi',
-        paint: { 'fill-color': '#20a8f0', 'fill-opacity': 0.12 },
+        paint: { 'fill-color': '#2e6f67', 'fill-opacity': 0.14 },
       })
       map.addLayer({
         id: 'roi-line',
         type: 'line',
         source: 'roi',
-        paint: { 'line-color': '#20a8f0', 'line-width': 1.5 },
+        paint: { 'line-color': '#215851', 'line-width': 1.8 },
       })
       syncROI(map)
     })
@@ -290,9 +290,9 @@ export default function OverviewMap() {
       {/* Panel title */}
       <div style={{
         position: 'absolute', top: 8, left: 8,
-        background: 'rgba(6,15,26,0.82)', color: '#6aaad4',
+        background: 'var(--bg-overlay)', color: 'var(--accent-strong)',
         fontSize: 11, fontWeight: 600, padding: '4px 8px',
-        borderRadius: 4, pointerEvents: 'none', letterSpacing: '0.03em',
+        borderRadius: 4, pointerEvents: 'none', letterSpacing: '0.03em', border: '1px solid var(--border)',
       }}>
         Surface σ₀ — North Atlantic
       </div>
@@ -300,8 +300,8 @@ export default function OverviewMap() {
       {/* Click hint */}
       <div style={{
         position: 'absolute', top: 34, left: 8,
-        background: 'rgba(6,15,26,0.7)', color: '#4a8ab4',
-        fontSize: 10, padding: '2px 6px', borderRadius: 3, pointerEvents: 'none',
+        background: 'var(--bg-overlay)', color: 'var(--info)',
+        fontSize: 10, padding: '2px 6px', borderRadius: 3, pointerEvents: 'none', border: '1px solid var(--border)',
       }}>
         Click to re-center ROI
       </div>
@@ -310,26 +310,26 @@ export default function OverviewMap() {
       {sigma0Range && (
         <div style={{
           position: 'absolute', bottom: 28, left: 8,
-          background: 'rgba(6,15,26,0.82)', borderRadius: 4,
-          padding: '5px 8px', pointerEvents: 'none', minWidth: 160,
+          background: 'var(--bg-overlay)', borderRadius: 4,
+          padding: '5px 8px', pointerEvents: 'none', minWidth: 160, border: '1px solid var(--border)',
         }}>
-          <div style={{ fontSize: 10, color: '#6aaad4', marginBottom: 3 }}>
+          <div style={{ fontSize: 10, color: 'var(--accent-strong)', marginBottom: 3 }}>
             Potential density σ₀ (kg m⁻³)
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 9, color: '#4a8ab4' }}>{sigma0Range.min.toFixed(2)}</span>
+            <span style={{ fontSize: 9, color: 'var(--info)' }}>{sigma0Range.min.toFixed(2)}</span>
             <div style={{
               flex: 1, height: 8, borderRadius: 2,
               background: 'linear-gradient(to right, rgb(68,1,84) 0%, rgb(59,82,139) 25%, rgb(33,145,140) 50%, rgb(94,201,98) 75%, rgb(253,231,37) 100%)',
             }} />
-            <span style={{ fontSize: 9, color: '#4a8ab4' }}>{sigma0Range.max.toFixed(2)}</span>
+            <span style={{ fontSize: 9, color: 'var(--info)' }}>{sigma0Range.max.toFixed(2)}</span>
           </div>
         </div>
       )}
       {isLoading && (
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(6,15,26,0.28)', color: '#6aaad4', fontSize: 12, pointerEvents: 'none',
+          background: 'rgba(247, 241, 231, 0.32)', color: 'var(--accent-strong)', fontSize: 12, pointerEvents: 'none',
         }}>
           Loading basin overview…
         </div>
@@ -337,7 +337,7 @@ export default function OverviewMap() {
       {isError && (
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(6,15,26,0.52)', color: '#f0a020', fontSize: 12, pointerEvents: 'none',
+          background: 'rgba(247, 241, 231, 0.72)', color: 'var(--warning)', fontSize: 12, pointerEvents: 'none',
           textAlign: 'center', padding: 24,
         }}>
           Basin overview unavailable right now

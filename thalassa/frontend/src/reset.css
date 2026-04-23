@@ -1,4 +1,22 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body, #root { height: 100%; overflow: hidden; }
-body { font-family: system-ui, -apple-system, sans-serif; background: #060f1a; color: #e0f0ff; }
+:root {
+  --bg-app: #efe7da;
+  --bg-panel: #f7f1e7;
+  --bg-panel-alt: #fbf7f1;
+  --bg-panel-strong: #e7dcc9;
+  --bg-overlay: rgba(247, 241, 231, 0.9);
+  --border: #cfbea7;
+  --border-strong: #b79f82;
+  --text: #5c5043;
+  --text-strong: #3f352a;
+  --text-muted: #7d7062;
+  --accent: #2e6f67;
+  --accent-strong: #215851;
+  --info: #3f7f9b;
+  --warning: #ab6a31;
+  --danger: #b24e46;
+  --success: #2f7a53;
+}
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg-app); color: var(--text); }
 select, input { font-family: inherit; }

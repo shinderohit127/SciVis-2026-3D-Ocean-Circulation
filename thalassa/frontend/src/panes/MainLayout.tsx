@@ -17,7 +17,7 @@ export default function MainLayout() {
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
-      background: '#060f1a',
+      background: 'var(--bg-app)',
       overflow: 'hidden',
     }}>
       {/* Main area: sidebar + panels */}
@@ -35,14 +35,14 @@ export default function MainLayout() {
           minWidth: 0,
         }}>
           {/* Top-left: overview map */}
-          <div style={{ borderRight: '1px solid #112240', borderBottom: '1px solid #112240', overflow: 'hidden' }}>
+          <div style={{ borderRight: '1px solid var(--border)', borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
             <PanelBoundary label="Overview Map">
               <OverviewMap />
             </PanelBoundary>
           </div>
 
           {/* Top-right: 3D isopycnal */}
-          <div style={{ borderBottom: '1px solid #112240', overflow: 'hidden' }}>
+          <div style={{ borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
             <PanelBoundary label="Isopycnal View">
               <IsopycnalView mesh={mesh} isLoading={isLoading} colorBy={colorBy} />
             </PanelBoundary>

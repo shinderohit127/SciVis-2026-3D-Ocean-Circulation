@@ -74,14 +74,14 @@ export default function TSPhaseSpace() {
 
   if (isLoading) {
     return (
-      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#2a6a9c', fontSize:12 }}>
+      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg-panel-alt)', color:'var(--info)', fontSize:12 }}>
         Loading T-S data…
       </div>
     )
   }
   if (isError || !data) {
     return (
-      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#f04040', fontSize:12 }}>
+      <div style={{ width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', background:'var(--bg-panel-alt)', color:'var(--danger)', fontSize:12 }}>
         T-S data unavailable — backend may be busy
       </div>
     )
@@ -100,8 +100,8 @@ export default function TSPhaseSpace() {
           colorscale: 'Viridis',
           showscale: true,
           colorbar: {
-            title: { text: 'σ₀', font: { color: '#6aaad4', size: 10 } } as any,
-            tickfont: { color: '#6aaad4', size: 9 },
+            title: { text: 'σ₀', font: { color: '#215851', size: 10 } } as any,
+            tickfont: { color: '#5c5043', size: 9 },
             thickness: 12,
             len: 0.82,
           },
@@ -111,33 +111,33 @@ export default function TSPhaseSpace() {
         hovertemplate: 'SA %{x:.3f}<br>CT %{y:.2f}<br>σ₀ %{marker.color:.2f}<extra></extra>',
       } as any]}
       layout={{
-        paper_bgcolor: '#060f1a',
-        plot_bgcolor: '#060f1a',
+        paper_bgcolor: '#f7f1e7',
+        plot_bgcolor: '#fbf7f1',
         margin: { l: 68, r: 28, t: 38, b: 60 },
         title: {
           text: 'T–S Diagram — each point is one ocean grid cell, colored by σ₀  ·  Lasso a cluster to target that density layer',
-          font: { color: '#6aaad4', size: 11 },
+          font: { color: '#215851', size: 11 },
           x: 0.5,
           y: 0.97,
         },
         xaxis: {
-          title: { text: 'Absolute Salinity SA (g kg⁻¹)', font: { color: '#6aaad4', size: 11 } },
-          color: '#2a6a9c',
-          gridcolor: '#0a1929',
-          zerolinecolor: '#1a3a5c',
+          title: { text: 'Absolute Salinity SA (g kg⁻¹)', font: { color: '#215851', size: 11 } },
+          color: '#5c5043',
+          gridcolor: '#e1d5c2',
+          zerolinecolor: '#cfbea7',
           range: saRange,
           automargin: true,
         },
         yaxis: {
-          title: { text: 'Conservative Temperature CT (°C)', font: { color: '#6aaad4', size: 11 } },
-          color: '#2a6a9c',
-          gridcolor: '#0a1929',
-          zerolinecolor: '#1a3a5c',
+          title: { text: 'Conservative Temperature CT (°C)', font: { color: '#215851', size: 11 } },
+          color: '#5c5043',
+          gridcolor: '#e1d5c2',
+          zerolinecolor: '#cfbea7',
           range: ctRange,
           automargin: true,
         },
         dragmode: 'lasso',
-        font: { color: '#6aaad4' },
+        font: { color: '#5c5043' },
         hovermode: 'closest',
       }}
       config={{ displayModeBar: true, modeBarButtonsToRemove: ['toImage'], responsive: true }}

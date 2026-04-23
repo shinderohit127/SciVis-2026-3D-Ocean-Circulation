@@ -207,7 +207,7 @@ export default function IsopycnalView({ mesh, isLoading, colorBy }: Props) {
         canvas.width = w; canvas.height = h
       }
       gl.viewport(0, 0, w, h)
-      gl.clearColor(0.04, 0.09, 0.16, 1)
+      gl.clearColor(0.95, 0.92, 0.87, 1)
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
       gl.enable(gl.DEPTH_TEST)
       gl.enable(gl.BLEND)
@@ -273,20 +273,20 @@ export default function IsopycnalView({ mesh, isLoading, colorBy }: Props) {
 
   if (isLoading) {
     return (
-      <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#2a6a9c', fontSize:13, gap:8 }}>
-        <span style={{ fontSize:14, color:'#6aaad4' }}>σ₀ Isopycnal Surface</span>
+      <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'var(--bg-panel-alt)', color:'var(--info)', fontSize:13, gap:8 }}>
+        <span style={{ fontSize:14, color:'var(--accent-strong)' }}>σ₀ Isopycnal Surface</span>
         <span>Computing isopycnal surface…</span>
-        <span style={{ fontSize:10, color:'#1a4a6c' }}>Marching cubes on LLC4320 data</span>
+        <span style={{ fontSize:10, color:'var(--text-muted)' }}>Marching cubes on LLC4320 data</span>
       </div>
     )
   }
 
   if (!mesh) {
     return (
-      <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#2a6a9c', fontSize:12, gap:8 }}>
-        <span style={{ fontSize:15, color:'#6aaad4' }}>σ₀ Isopycnal Surface</span>
+      <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'var(--bg-panel-alt)', color:'var(--info)', fontSize:12, gap:8 }}>
+        <span style={{ fontSize:15, color:'var(--accent-strong)' }}>σ₀ Isopycnal Surface</span>
         <span>Set ROI &amp; σ₀ in the sidebar, then the surface will auto-compute</span>
-        <span style={{ fontSize:10, color:'#1a4a6c', textAlign:'center', maxWidth:260 }}>
+        <span style={{ fontSize:10, color:'var(--text-muted)', textAlign:'center', maxWidth:260 }}>
           An isopycnal is a surface of constant potential density. Water on the same
           isopycnal mixes freely; crossing one costs energy.
         </span>
@@ -296,9 +296,9 @@ export default function IsopycnalView({ mesh, isLoading, colorBy }: Props) {
 
   if (mesh.vertex_count === 0) {
     return (
-      <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'#060f1a', color:'#f0a020', fontSize:12, gap:6 }}>
+      <div style={{ width:'100%', height:'100%', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', background:'var(--bg-panel-alt)', color:'var(--warning)', fontSize:12, gap:6 }}>
         <span>No isopycnal found at σ₀ = {mesh.isovalue} kg/m³</span>
-        <span style={{ fontSize:10, color:'#2a6a9c' }}>Try a different σ₀ value or expand the depth range</span>
+        <span style={{ fontSize:10, color:'var(--info)' }}>Try a different σ₀ value or expand the depth range</span>
       </div>
     )
   }
@@ -308,14 +308,14 @@ export default function IsopycnalView({ mesh, isLoading, colorBy }: Props) {
       {/* Panel title bar */}
       <div style={{
         flexShrink: 0, padding: '4px 8px',
-        background: 'rgba(6,15,26,0.9)', borderBottom: '1px solid #112240',
+        background: 'var(--bg-overlay)', borderBottom: '1px solid var(--border)',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         pointerEvents: 'none',
       }}>
-        <span style={{ fontSize: 11, color: '#6aaad4', fontWeight: 600, letterSpacing: '0.04em' }}>
+        <span style={{ fontSize: 11, color: 'var(--accent-strong)', fontWeight: 600, letterSpacing: '0.04em' }}>
           Isopycnal Surface — σ₀ = {mesh.isovalue} kg m⁻³
         </span>
-        <span style={{ fontSize: 10, color: '#2a6a9c' }}>
+        <span style={{ fontSize: 10, color: 'var(--info)' }}>
           {mesh.vertex_count.toLocaleString()} vertices
         </span>
       </div>
@@ -334,8 +334,8 @@ export default function IsopycnalView({ mesh, isLoading, colorBy }: Props) {
       {/* Interaction hint */}
       <div style={{
         position:'absolute', bottom: colorRange ? 52 : 8, left:8,
-        background:'rgba(6,15,26,0.75)', color:'#4a8ab4',
-        fontSize:10, padding:'3px 6px', borderRadius:3, pointerEvents:'none',
+        background:'var(--bg-overlay)', color:'var(--info)',
+        fontSize:10, padding:'3px 6px', borderRadius:3, pointerEvents:'none', border: '1px solid var(--border)',
       }}>
         Drag to rotate · Scroll to zoom
       </div>
@@ -344,18 +344,18 @@ export default function IsopycnalView({ mesh, isLoading, colorBy }: Props) {
       {colorRange && colorBy && (
         <div style={{
           position:'absolute', bottom:8, left:8, right:8,
-          background:'rgba(6,15,26,0.82)', borderRadius:4,
-          padding:'5px 8px', pointerEvents:'none',
+          background:'var(--bg-overlay)', borderRadius:4,
+          padding:'5px 8px', pointerEvents:'none', border: '1px solid var(--border)',
         }}>
-          <div style={{ fontSize:10, color:'#6aaad4', marginBottom:3 }}>
+          <div style={{ fontSize:10, color:'var(--accent-strong)', marginBottom:3 }}>
             {COLOR_LABEL[colorBy] ?? colorBy}
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <span style={{ fontSize:9, color:'#4a8ab4', minWidth:36 }}>
+            <span style={{ fontSize:9, color:'var(--info)', minWidth:36 }}>
               {colorRange.min.toFixed(1)}
             </span>
             <div style={{ flex:1, height:8, borderRadius:2, background: VIRIDIS_CSS }} />
-            <span style={{ fontSize:9, color:'#4a8ab4', minWidth:36, textAlign:'right' }}>
+            <span style={{ fontSize:9, color:'var(--info)', minWidth:36, textAlign:'right' }}>
               {colorRange.max.toFixed(1)}
             </span>
           </div>
