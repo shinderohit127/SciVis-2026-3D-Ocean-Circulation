@@ -3,6 +3,7 @@ import ROIControls from '../components/ROIControls'
 import OverviewMap from '../components/OverviewMap'
 import IsopycnalView from '../components/IsopycnalView'
 import TSPhaseSpace from '../components/TSPhaseSpace'
+import AnomalyTimeline from '../components/AnomalyTimeline'
 import StatusBar from '../components/StatusBar'
 import PanelBoundary from '../components/PanelBoundary'
 import { useStore } from '../state/store'
@@ -48,10 +49,17 @@ export default function MainLayout() {
             </PanelBoundary>
           </div>
 
-          {/* Bottom: T-S phase space (spans both columns) */}
-          <div style={{ gridColumn: '1 / -1', overflow: 'hidden' }}>
+          {/* Bottom-left: T-S phase space */}
+          <div style={{ borderRight: '1px solid var(--border)', overflow: 'hidden' }}>
             <PanelBoundary label="T-S Phase Space">
               <TSPhaseSpace />
+            </PanelBoundary>
+          </div>
+
+          {/* Bottom-right: Anomaly timeline */}
+          <div style={{ overflow: 'hidden' }}>
+            <PanelBoundary label="Anomaly Timeline">
+              <AnomalyTimeline />
             </PanelBoundary>
           </div>
         </div>

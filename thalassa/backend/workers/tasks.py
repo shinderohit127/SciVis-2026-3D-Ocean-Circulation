@@ -95,6 +95,82 @@ def compute_density_async(self, request_dict: dict) -> dict:
     }
 
 
+@celery_app.task(bind=True, name="tasks.compute_temporal_window_async")
+def compute_temporal_window_async(self, request_dict: dict) -> dict:
+    """
+    Compute per-timestep thermohaline descriptors for a window of time.
+
+    Samples n_samples evenly-spaced timesteps between t_start and t_end,
+    then computes anomaly scores as |z-scores| of sigma0_mean across the window.
+
+    Args:
+        request_dict: serialised TemporalWindowRequest
+
+    Returns:
+        serialised TemporalWindowResponse dict
+    """
+    import numpy as np
+    from services.features.temporal import compute_temporal_descriptor, DESCRIPTOR_VERSION
+
+    lat_min = request_dict["lat_min"]
+    lat_max = request_dict["lat_max"]
+    lon_min = request_dict["lon_min"]
+    lon_max = request_dict["lon_max"]
+    depth_min_m = request_dict.get("depth_min_m", 0.0)
+    depth_max_m = request_dict.get("depth_max_m", 2000.0)
+    t_start = request_dict["t_start"]
+    t_end   = request_dict["t_end"]
+    n_samples = min(request_dict.get("n_samples", 50), 200)
+
+    timesteps = [
+        int(round(t_start + i * (t_end - t_start) / (n_samples - 1)))
+        for i in range(n_samples)
+    ]
+    timesteps = sorted(set(timesteps))   # deduplicate after rounding
+
+    raw = []
+    for t in timesteps:
+        try:
+            d = compute_temporal_descriptor(
+                lat_min, lat_max, lon_min, lon_max,
+                depth_min_m, depth_max_m, t,
+            )
+            raw.append(d)
+        except Exception as exc:
+            log.warning("descriptor failed for t=%d: %s", t, exc)
+
+    if not raw:
+        return {
+            "t_start": t_start, "t_end": t_end, "n_computed": 0,
+            "descriptors": [], "descriptor_version": DESCRIPTOR_VERSION,
+        }
+
+    means = np.array([d["sigma0"]["mean"] for d in raw])
+    window_mean = float(np.mean(means))
+    window_std  = float(np.std(means)) or 1.0
+    anomaly_scores = np.abs((means - window_mean) / window_std)
+
+    descriptors = [
+        {
+            "timestep":      d["timestep"],
+            "sigma0_mean":   d["sigma0"]["mean"],
+            "sigma0_std":    d["sigma0"]["std"],
+            "ct_mean":       d["CT"]["mean"],
+            "sa_mean":       d["SA"]["mean"],
+            "anomaly_score": float(anomaly_scores[i]),
+        }
+        for i, d in enumerate(raw)
+    ]
+
+    return {
+        "t_start":            t_start,
+        "t_end":              t_end,
+        "n_computed":         len(descriptors),
+        "descriptors":        descriptors,
+        "descriptor_version": DESCRIPTOR_VERSION,
+    }
+
+
 @celery_app.task(bind=True, name="tasks.extract_isopycnal_async")
 def extract_isopycnal_async(self, request_dict: dict) -> dict:
     """

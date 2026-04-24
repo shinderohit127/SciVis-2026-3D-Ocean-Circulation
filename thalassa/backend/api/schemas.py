@@ -202,3 +202,59 @@ class JobStatus(BaseModel):
     status: str               # "queued" | "running" | "complete" | "failed"
     result: Optional[dict] = None
     error: Optional[str] = None
+
+
+# ── Temporal navigation (Week 9-10) ───────────────────────────────────────────
+
+MAX_TIMESTEP = 10311   # LLC4320: 10,312 hourly steps (0-indexed)
+MAX_WINDOW_SAMPLES = 200
+
+
+class TemporalWindowRequest(BaseModel):
+    """Request body for POST /api/temporal/window."""
+    lat_min: float
+    lat_max: float
+    lon_min: float
+    lon_max: float
+    depth_min_m: float = 0.0
+    depth_max_m: float = 2000.0
+    t_start: int = 0
+    t_end: int = MAX_TIMESTEP
+    n_samples: int = 50       # number of evenly-spaced timesteps to sample
+
+    @field_validator("t_start", "t_end")
+    @classmethod
+    def timestep_range(cls, v: int) -> int:
+        if not (0 <= v <= MAX_TIMESTEP):
+            raise ValueError(f"timestep must be 0–{MAX_TIMESTEP}")
+        return v
+
+    @field_validator("n_samples")
+    @classmethod
+    def samples_cap(cls, v: int) -> int:
+        return min(max(v, 2), MAX_WINDOW_SAMPLES)
+
+    @model_validator(mode="after")
+    def t_order(self) -> "TemporalWindowRequest":
+        if self.t_start >= self.t_end:
+            raise ValueError("t_start must be < t_end")
+        return self
+
+
+class TimestepDescriptor(BaseModel):
+    """Thermohaline summary for one timestep."""
+    timestep: int
+    sigma0_mean: float
+    sigma0_std: float
+    ct_mean: float
+    sa_mean: float
+    anomaly_score: float   # |z-score| of sigma0_mean relative to the window
+
+
+class TemporalWindowResponse(BaseModel):
+    """Response from POST /api/temporal/window (returned via job result)."""
+    t_start: int
+    t_end: int
+    n_computed: int
+    descriptors: list[TimestepDescriptor]
+    descriptor_version: str

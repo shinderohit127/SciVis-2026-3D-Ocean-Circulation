@@ -10,6 +10,7 @@ from api.metadata import router as metadata_router
 from api.overview import router as overview_router
 from api.roi import router as roi_router
 from api.scene import router as scene_router
+from api.temporal import router as temporal_router
 
 app = FastAPI(
     title="THALASSA API",
@@ -30,6 +31,7 @@ app.include_router(derived_router,  prefix="/api")
 app.include_router(overview_router, prefix="/api")
 app.include_router(scene_router,    prefix="/api")
 app.include_router(jobs_router,     prefix="/api")
+app.include_router(temporal_router, prefix="/api")
 
 
 @app.get("/health")

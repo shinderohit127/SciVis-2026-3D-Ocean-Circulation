@@ -13,15 +13,21 @@ export interface ROI {
 
 export type ColorBy = 'CT' | 'SA' | 'alpha' | 'beta' | null
 
+export type PlaySpeed = 0.5 | 1 | 2 | 4
+
 interface AppState {
   roi: ROI
   sigma0Value: number
   colorBy: ColorBy
   brushedSigma0Range: [number, number] | null   // from T-S lasso → triggers new isopycnal
+  isPlaying: boolean
+  playSpeed: PlaySpeed
   setROI: (patch: Partial<ROI>) => void
   setSigma0: (v: number) => void
   setColorBy: (c: ColorBy) => void
   setBrushedSigma0Range: (r: [number, number] | null) => void
+  setIsPlaying: (v: boolean) => void
+  setPlaySpeed: (v: PlaySpeed) => void
 }
 
 const DEFAULT_ROI: ROI = {
@@ -40,8 +46,12 @@ export const useStore = create<AppState>((set) => ({
   sigma0Value: 27.0,
   colorBy: 'CT',
   brushedSigma0Range: null,
+  isPlaying: false,
+  playSpeed: 1,
   setROI: (patch) => set((s) => ({ roi: { ...s.roi, ...patch } })),
   setSigma0: (sigma0Value) => set({ sigma0Value }),
   setColorBy: (colorBy) => set({ colorBy }),
   setBrushedSigma0Range: (brushedSigma0Range) => set({ brushedSigma0Range }),
+  setIsPlaying: (isPlaying) => set({ isPlaying }),
+  setPlaySpeed: (playSpeed) => set({ playSpeed }),
 }))
