@@ -10,8 +10,8 @@ import { useStore } from '../state/store'
 import { useIsopycnalJob } from '../api/isopycnal'
 
 export default function MainLayout() {
-  const { roi, sigma0Value, colorBy } = useStore()
-  const { status, mesh, error, jobId, isLoading } = useIsopycnalJob(roi, sigma0Value, colorBy)
+  const { roi, sigma0Value, colorBy, decimateTarget } = useStore()
+  const { status, mesh, error, jobId, isLoading } = useIsopycnalJob(roi, sigma0Value, colorBy, decimateTarget)
 
   return (
     <div style={{
@@ -45,7 +45,7 @@ export default function MainLayout() {
           {/* Top-right: 3D isopycnal */}
           <div style={{ borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
             <PanelBoundary label="Isopycnal View">
-              <IsopycnalView mesh={mesh} isLoading={isLoading} colorBy={colorBy} />
+              <IsopycnalView mesh={mesh} isLoading={isLoading} colorBy={colorBy} jobId={jobId ?? null} />
             </PanelBoundary>
           </div>
 

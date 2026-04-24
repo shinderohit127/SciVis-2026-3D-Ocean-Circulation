@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react'
+import React, { useEffect, useRef, useMemo, useCallback } from 'react'
 import type { IsopycnalMesh } from '../api/isopycnal'
 import type { ColorBy } from '../state/store'
 
@@ -6,6 +6,7 @@ interface Props {
   mesh: IsopycnalMesh | null
   isLoading: boolean
   colorBy: ColorBy
+  jobId: string | null
 }
 
 const VIRIDIS_CSS =
@@ -114,7 +115,7 @@ function mvp(
   return new Float32Array(mul(mul(mv, tz), p))
 }
 
-export default function IsopycnalView({ mesh, isLoading, colorBy }: Props) {
+export default function IsopycnalView({ mesh, isLoading, colorBy, jobId }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stateRef = useRef({ rotX: 0.62, rotY: -0.55, zoom: 2.15, dragging: false, lastX: 0, lastY: 0 })
   const rafRef = useRef<number>(0)
@@ -259,6 +260,25 @@ export default function IsopycnalView({ mesh, isLoading, colorBy }: Props) {
     stateRef.current.zoom = Math.max(1, Math.min(20, stateRef.current.zoom + e.deltaY * 0.005))
   }
 
+  // Estimated transfer size: ~12 bytes/vertex (3×float32) + ~12 bytes/face (3×uint32)
+  const transferKB = mesh
+    ? Math.round((mesh.vertex_count * 12 + mesh.face_count * 12) / 1024)
+    : 0
+
+  // Color coding: green < 50k faces, orange < 200k, red ≥ 200k
+  const meshHealthColor = !mesh ? 'var(--info)'
+    : mesh.face_count < 50_000  ? '#2e9e6a'
+    : mesh.face_count < 200_000 ? '#e67e22'
+    : '#c0392b'
+
+  const handleExportGlb = useCallback(() => {
+    if (!jobId) return
+    const a = document.createElement('a')
+    a.href = `/api/scene/export/${jobId}.glb`
+    a.download = `isopycnal_${jobId.slice(0, 8)}.glb`
+    a.click()
+  }, [jobId])
+
   // Compute color range for the legend from live mesh data
   const colorRange = useMemo(() => {
     if (!mesh?.color_values?.length || !colorBy) return null
@@ -309,15 +329,30 @@ export default function IsopycnalView({ mesh, isLoading, colorBy }: Props) {
       <div style={{
         flexShrink: 0, padding: '4px 8px',
         background: 'var(--bg-overlay)', borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        pointerEvents: 'none',
+        display: 'flex', alignItems: 'center', gap: 8,
       }}>
-        <span style={{ fontSize: 11, color: 'var(--accent-strong)', fontWeight: 600, letterSpacing: '0.04em' }}>
-          Isopycnal Surface — σ₀ = {mesh.isovalue} kg m⁻³
+        <span style={{ fontSize: 11, color: 'var(--accent-strong)', fontWeight: 600, letterSpacing: '0.04em', flexShrink: 0 }}>
+          σ₀ = {mesh.isovalue} kg m⁻³
         </span>
-        <span style={{ fontSize: 10, color: 'var(--info)' }}>
-          {mesh.vertex_count.toLocaleString()} vertices
+        <span style={{ fontSize: 10, color: meshHealthColor, fontVariantNumeric: 'tabular-nums' }}>
+          {mesh.face_count.toLocaleString()} faces · {mesh.vertex_count.toLocaleString()} verts
+          {mesh.decimated ? ' · decimated' : ''}
+          {' · ~'}{transferKB} KB
         </span>
+        {/* Export button — only visible when job result is available */}
+        {jobId && (
+          <button
+            onClick={handleExportGlb}
+            title="Download as binary glTF (.glb) for Blender / ParaView"
+            style={{
+              marginLeft: 'auto', padding: '2px 8px', fontSize: 10,
+              background: 'var(--accent)', border: '1px solid var(--accent-strong)',
+              borderRadius: 3, color: '#fffaf2', cursor: 'pointer', flexShrink: 0,
+            }}
+          >
+            Export .glb
+          </button>
+        )}
       </div>
 
       {/* WebGL canvas */}

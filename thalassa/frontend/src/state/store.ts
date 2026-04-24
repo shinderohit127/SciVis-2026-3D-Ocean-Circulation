@@ -14,6 +14,13 @@ export interface ROI {
 export type ColorBy = 'CT' | 'SA' | 'alpha' | 'beta' | null
 
 export type PlaySpeed = 0.5 | 1 | 2 | 4
+export type QualityPreset = 'preview' | 'standard' | 'fine'
+
+const QUALITY_MAP: Record<QualityPreset, number> = {
+  preview:  -7,
+  standard: -9,
+  fine:     -11,
+}
 
 interface AppState {
   roi: ROI
@@ -22,13 +29,19 @@ interface AppState {
   brushedSigma0Range: [number, number] | null   // from T-S lasso → triggers new isopycnal
   isPlaying: boolean
   playSpeed: PlaySpeed
+  qualityPreset: QualityPreset
+  decimateTarget: number | null                 // null = no decimation; number = face cap
   setROI: (patch: Partial<ROI>) => void
   setSigma0: (v: number) => void
   setColorBy: (c: ColorBy) => void
   setBrushedSigma0Range: (r: [number, number] | null) => void
   setIsPlaying: (v: boolean) => void
   setPlaySpeed: (v: PlaySpeed) => void
+  setQualityPreset: (p: QualityPreset) => void
+  setDecimateTarget: (n: number | null) => void
 }
+
+export { QUALITY_MAP }
 
 const DEFAULT_ROI: ROI = {
   lat_min: 35,
@@ -48,10 +61,17 @@ export const useStore = create<AppState>((set) => ({
   brushedSigma0Range: null,
   isPlaying: false,
   playSpeed: 1,
+  qualityPreset: 'standard',
+  decimateTarget: 50000,
   setROI: (patch) => set((s) => ({ roi: { ...s.roi, ...patch } })),
   setSigma0: (sigma0Value) => set({ sigma0Value }),
   setColorBy: (colorBy) => set({ colorBy }),
   setBrushedSigma0Range: (brushedSigma0Range) => set({ brushedSigma0Range }),
   setIsPlaying: (isPlaying) => set({ isPlaying }),
   setPlaySpeed: (playSpeed) => set({ playSpeed }),
+  setQualityPreset: (qualityPreset) => set((s) => ({
+    qualityPreset,
+    roi: { ...s.roi, quality: QUALITY_MAP[qualityPreset] },
+  })),
+  setDecimateTarget: (decimateTarget) => set({ decimateTarget }),
 }))

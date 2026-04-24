@@ -222,6 +222,22 @@ def extract_isopycnal_async(self, request_dict: dict) -> dict:
     lons        = roi.lon_array(n_x)
 
     mesh = extract_isopycnal(sigma0_3d, sigma0_val, lons, lats, depths_m, color_field)
+
+    target_faces = request_dict.get("target_faces")
+    if target_faces and mesh.get("face_count", 0) > target_faces:
+        from services.scene.decimation import decimate_mesh
+        new_v, new_f, new_c = decimate_mesh(
+            mesh["vertices"], mesh["faces"],
+            target_faces=target_faces,
+            color_values=mesh.get("color_values"),
+        )
+        mesh["vertices"]     = new_v
+        mesh["faces"]        = new_f
+        mesh["color_values"] = new_c
+        mesh["vertex_count"] = len(new_v)
+        mesh["face_count"]   = len(new_f)
+        mesh["decimated"]    = True
+
     mesh["roi"]      = roi_d
     mesh["color_by"] = color_by
     return mesh

@@ -11,6 +11,8 @@ from api.overview import router as overview_router
 from api.roi import router as roi_router
 from api.scene import router as scene_router
 from api.temporal import router as temporal_router
+from api.benchmark import router as benchmark_router
+from api.export import router as export_router
 
 app = FastAPI(
     title="THALASSA API",
@@ -32,6 +34,8 @@ app.include_router(overview_router, prefix="/api")
 app.include_router(scene_router,    prefix="/api")
 app.include_router(jobs_router,     prefix="/api")
 app.include_router(temporal_router, prefix="/api")
+app.include_router(benchmark_router, prefix="/api")
+app.include_router(export_router,   prefix="/api")
 
 
 @app.get("/health")

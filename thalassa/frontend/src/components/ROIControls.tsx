@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { useStore } from '../state/store'
-import type { ColorBy, PlaySpeed } from '../state/store'
+import type { ColorBy, PlaySpeed, QualityPreset } from '../state/store'
 
 const s: Record<string, React.CSSProperties> = {
   panel: {
@@ -52,8 +52,8 @@ function stepToDate(step: number): string {
 
 export default function ROIControls({ onApply }: { onApply?: () => void }) {
   const {
-    roi, sigma0Value, colorBy, isPlaying, playSpeed,
-    setROI, setSigma0, setColorBy, setIsPlaying, setPlaySpeed,
+    roi, sigma0Value, colorBy, isPlaying, playSpeed, qualityPreset, decimateTarget,
+    setROI, setSigma0, setColorBy, setIsPlaying, setPlaySpeed, setQualityPreset, setDecimateTarget,
   } = useStore()
 
   const playRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -240,6 +240,54 @@ export default function ROIControls({ onApply }: { onApply?: () => void }) {
         <div style={s.hint}>
           Paint the isopycnal with a scalar field. CT reveals warm/cold cores;
           SA shows fresher vs saltier water masses.
+        </div>
+      </div>
+
+      <div style={s.divider} />
+
+      {/* Performance & quality */}
+      <div>
+        <div style={s.sectionTitle}>Mesh Quality</div>
+        <div style={{ display: 'flex', gap: 3 }}>
+          {(['preview', 'standard', 'fine'] as QualityPreset[]).map(p => (
+            <button key={p} onClick={() => setQualityPreset(p)} style={{
+              flex: 1, padding: '3px 0', fontSize: 10, textTransform: 'capitalize',
+              background: qualityPreset === p ? 'var(--accent)' : 'var(--bg-panel-alt)',
+              border: `1px solid ${qualityPreset === p ? 'var(--accent-strong)' : 'var(--border-strong)'}`,
+              borderRadius: 3, color: qualityPreset === p ? '#fffaf2' : 'var(--text-strong)',
+              cursor: 'pointer',
+            }}>
+              {p}
+            </button>
+          ))}
+        </div>
+        <div style={s.hint}>
+          Preview = fast (~2s). Standard = balanced. Fine = full detail (~30s).
+        </div>
+      </div>
+
+      <div>
+        <div style={s.sectionTitle}>Decimation</div>
+        <div style={{ display: 'flex', gap: 3 }}>
+          {([null, 50000, 20000] as (number | null)[]).map(v => {
+            const label = v == null ? 'Off' : v >= 50000 ? '50k' : '20k'
+            const active = decimateTarget === v
+            return (
+              <button key={label} onClick={() => setDecimateTarget(v)} style={{
+                flex: 1, padding: '3px 0', fontSize: 10,
+                background: active ? 'var(--accent)' : 'var(--bg-panel-alt)',
+                border: `1px solid ${active ? 'var(--accent-strong)' : 'var(--border-strong)'}`,
+                borderRadius: 3, color: active ? '#fffaf2' : 'var(--text-strong)',
+                cursor: 'pointer',
+              }}>
+                {label}
+              </button>
+            )
+          })}
+        </div>
+        <div style={s.hint}>
+          Cap mesh faces for faster transfer. 50k = good for demo. 20k = lightweight.
+          Use "Off" only for final paper figures. Export .glb from the 3D panel.
         </div>
       </div>
 

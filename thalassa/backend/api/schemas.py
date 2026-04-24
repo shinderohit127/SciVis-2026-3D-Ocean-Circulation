@@ -191,7 +191,25 @@ class IsopycnalRequest(BaseModel):
     """Request body for POST /api/scene/isopycnal."""
     roi: ROIRequest
     sigma0_value: float
-    color_by: Optional[str] = None   # "CT" | "SA" | "alpha" | "beta" | None
+    color_by: Optional[str] = None          # "CT" | "SA" | "alpha" | "beta" | None
+    target_faces: Optional[int] = None      # decimate to ≤ N faces; None = no decimation
+
+
+# ── Benchmark (Week 11-12) ────────────────────────────────────────────────────
+
+class BenchmarkRun(BaseModel):
+    quality: int
+    shape: dict[str, int]
+    elapsed_ms: int
+    estimated_mb: float
+    note: str
+
+
+class BenchmarkResponse(BaseModel):
+    """Response from POST /api/benchmark."""
+    roi: dict
+    runs: list[BenchmarkRun]
+    total_elapsed_ms: int
 
 
 # ── Async job polling (Week 5-6) ──────────────────────────────────────────────

@@ -9,6 +9,7 @@ export interface IsopycnalMesh {
   isovalue: number
   vertex_count: number
   face_count: number
+  decimated?: boolean
 }
 
 export interface JobStatus {
@@ -22,11 +23,13 @@ async function submitIsopycnal(
   roi: ROI,
   sigma0_value: number,
   color_by: ColorBy,
+  target_faces: number | null,
 ): Promise<string> {
   const { data } = await axios.post<JobStatus>('/api/scene/isopycnal', {
     roi,
     sigma0_value,
     color_by,
+    target_faces,
   })
   return data.job_id
 }
@@ -40,11 +43,12 @@ export function useIsopycnalJob(
   roi: ROI,
   sigma0Value: number,
   colorBy: ColorBy,
+  targetFaces: number | null = null,
   enabled = true,
 ) {
   const submitQuery = useQuery({
-    queryKey: ['isopycnal-submit', roi, sigma0Value, colorBy],
-    queryFn: () => submitIsopycnal(roi, sigma0Value, colorBy),
+    queryKey: ['isopycnal-submit', roi, sigma0Value, colorBy, targetFaces],
+    queryFn: () => submitIsopycnal(roi, sigma0Value, colorBy, targetFaces),
     enabled,
     staleTime: Infinity,
     retry: 1,
