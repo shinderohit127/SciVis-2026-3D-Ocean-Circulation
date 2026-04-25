@@ -5,6 +5,7 @@ import type { ColorBy } from '../state/store'
 interface Props {
   mesh: IsopycnalMesh | null
   isLoading: boolean
+  isRefining?: boolean
   colorBy: ColorBy
   jobId: string | null
 }
@@ -115,7 +116,7 @@ function mvp(
   return new Float32Array(mul(mul(mv, tz), p))
 }
 
-export default function IsopycnalView({ mesh, isLoading, colorBy, jobId }: Props) {
+export default function IsopycnalView({ mesh, isLoading, isRefining = false, colorBy, jobId }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const stateRef = useRef({ rotX: 0.62, rotY: -0.55, zoom: 2.15, dragging: false, lastX: 0, lastY: 0 })
   const rafRef = useRef<number>(0)
@@ -279,6 +280,20 @@ export default function IsopycnalView({ mesh, isLoading, colorBy, jobId }: Props
     a.click()
   }, [jobId])
 
+  const handleScreenshot = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    canvas.toBlob((blob) => {
+      if (!blob) return
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `isopycnal_sigma0_${mesh?.isovalue ?? 'xx'}.png`
+      a.click()
+      URL.revokeObjectURL(url)
+    }, 'image/png')
+  }, [mesh?.isovalue])
+
   // Compute color range for the legend from live mesh data
   const colorRange = useMemo(() => {
     if (!mesh?.color_values?.length || !colorBy) return null
@@ -339,20 +354,43 @@ export default function IsopycnalView({ mesh, isLoading, colorBy, jobId }: Props
           {mesh.decimated ? ' · decimated' : ''}
           {' · ~'}{transferKB} KB
         </span>
-        {/* Export button — only visible when job result is available */}
-        {jobId && (
+        {/* Refining badge */}
+        {isRefining && (
+          <span style={{
+            fontSize: 10, color: '#e67e22', fontWeight: 600,
+            background: 'rgba(230,126,34,0.12)', padding: '1px 6px', borderRadius: 3,
+          }}>
+            Refining…
+          </span>
+        )}
+
+        {/* Action buttons */}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 4 }}>
           <button
-            onClick={handleExportGlb}
-            title="Download as binary glTF (.glb) for Blender / ParaView"
+            onClick={handleScreenshot}
+            title="Save WebGL canvas as PNG"
             style={{
-              marginLeft: 'auto', padding: '2px 8px', fontSize: 10,
-              background: 'var(--accent)', border: '1px solid var(--accent-strong)',
-              borderRadius: 3, color: '#fffaf2', cursor: 'pointer', flexShrink: 0,
+              padding: '2px 7px', fontSize: 10,
+              background: 'var(--bg-panel-alt)', border: '1px solid var(--border-strong)',
+              borderRadius: 3, color: 'var(--text-strong)', cursor: 'pointer',
             }}
           >
-            Export .glb
+            PNG
           </button>
-        )}
+          {jobId && (
+            <button
+              onClick={handleExportGlb}
+              title="Download as binary glTF (.glb) for Blender / ParaView"
+              style={{
+                padding: '2px 7px', fontSize: 10,
+                background: 'var(--accent)', border: '1px solid var(--accent-strong)',
+                borderRadius: 3, color: '#fffaf2', cursor: 'pointer',
+              }}
+            >
+              GLB
+            </button>
+          )}
+        </div>
       </div>
 
       {/* WebGL canvas */}
@@ -365,6 +403,29 @@ export default function IsopycnalView({ mesh, isLoading, colorBy, jobId }: Props
         onMouseLeave={onMouseUp}
         onWheel={onWheel}
       />
+
+      {/* Axis / coordinate info overlay — top-right */}
+      {mesh && mesh.vertex_count > 0 && (() => {
+        const lons = mesh.vertices.map(v => v[0])
+        const lats = mesh.vertices.map(v => v[1])
+        const deps = mesh.vertices.map(v => v[2])
+        const lonRange = `${Math.min(...lons).toFixed(1)}° – ${Math.max(...lons).toFixed(1)}°E`
+        const latRange = `${Math.min(...lats).toFixed(1)}° – ${Math.max(...lats).toFixed(1)}°N`
+        const depRange = `${Math.round(Math.min(...deps))} – ${Math.round(Math.max(...deps))} m`
+        return (
+          <div style={{
+            position:'absolute', top:38, right:8,
+            background:'var(--bg-overlay)', color:'var(--text-muted)',
+            fontSize:9, padding:'4px 7px', borderRadius:3, pointerEvents:'none',
+            border:'1px solid var(--border)', lineHeight:1.6,
+          }}>
+            <div style={{ color:'var(--info)', fontWeight:600, marginBottom:1 }}>Extent</div>
+            <div>Lon: {lonRange}</div>
+            <div>Lat: {latRange}</div>
+            <div>Depth: {depRange}</div>
+          </div>
+        )
+      })()}
 
       {/* Interaction hint */}
       <div style={{

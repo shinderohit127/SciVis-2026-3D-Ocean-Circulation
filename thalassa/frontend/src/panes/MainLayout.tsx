@@ -11,7 +11,7 @@ import { useIsopycnalJob } from '../api/isopycnal'
 
 export default function MainLayout() {
   const { roi, sigma0Value, colorBy, decimateTarget } = useStore()
-  const { status, mesh, error, jobId, isLoading } = useIsopycnalJob(roi, sigma0Value, colorBy, decimateTarget)
+  const { status, mesh, error, jobId, isLoading, isRefining } = useIsopycnalJob(roi, sigma0Value, colorBy, decimateTarget)
 
   return (
     <div style={{
@@ -45,7 +45,7 @@ export default function MainLayout() {
           {/* Top-right: 3D isopycnal */}
           <div style={{ borderBottom: '1px solid var(--border)', overflow: 'hidden' }}>
             <PanelBoundary label="Isopycnal View">
-              <IsopycnalView mesh={mesh} isLoading={isLoading} colorBy={colorBy} jobId={jobId ?? null} />
+              <IsopycnalView mesh={mesh} isLoading={isLoading} isRefining={isRefining} colorBy={colorBy} jobId={jobId ?? null} />
             </PanelBoundary>
           </div>
 
@@ -68,7 +68,7 @@ export default function MainLayout() {
       {/* Status bar */}
       <StatusBar
         status={status}
-        jobId={jobId}
+        jobId={jobId ?? undefined}
         error={error}
         vertexCount={mesh?.vertex_count}
         faceCount={mesh?.face_count}

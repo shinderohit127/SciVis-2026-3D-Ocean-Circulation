@@ -60,7 +60,11 @@ async def test_overview_depth_band_structure():
 
 @pytest.mark.asyncio
 @patch("api.overview.LLC4320Reader", _mock_reader)
-async def test_overview_lats_lons_present():
+@patch("api.overview.cache")
+async def test_overview_lats_lons_present(mock_cache):
+    # Bypass Redis cache so we get a fresh result with _NY/_NX dimensions.
+    mock_cache.get.return_value = None
+    mock_cache.set.return_value = None
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         r = await c.post("/api/overview", json=_PAYLOAD)
     data = r.json()

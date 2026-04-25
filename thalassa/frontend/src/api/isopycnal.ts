@@ -39,25 +39,24 @@ async function pollJob(job_id: string): Promise<JobStatus> {
   return data
 }
 
-export function useIsopycnalJob(
+function useSingleJob(
   roi: ROI,
   sigma0Value: number,
   colorBy: ColorBy,
-  targetFaces: number | null = null,
-  enabled = true,
+  targetFaces: number | null,
+  enabled: boolean,
+  keyPrefix: string,
 ) {
   const submitQuery = useQuery({
-    queryKey: ['isopycnal-submit', roi, sigma0Value, colorBy, targetFaces],
+    queryKey: [keyPrefix + '-submit', roi, sigma0Value, colorBy, targetFaces],
     queryFn: () => submitIsopycnal(roi, sigma0Value, colorBy, targetFaces),
     enabled,
     staleTime: Infinity,
     retry: 1,
   })
-
   const jobId = submitQuery.data
-
   const pollQuery = useQuery({
-    queryKey: ['isopycnal-poll', jobId],
+    queryKey: [keyPrefix + '-poll', jobId],
     queryFn: () => pollJob(jobId!),
     enabled: !!jobId,
     refetchInterval: (query) => {
@@ -65,17 +64,52 @@ export function useIsopycnalJob(
       return st === 'complete' || st === 'failed' ? false : 2000
     },
   })
+  const mesh = pollQuery.data?.status === 'complete' ? pollQuery.data.result : null
+  const done = pollQuery.data?.status === 'complete' || pollQuery.data?.status === 'failed'
+  return { jobId, mesh, done, isLoading: submitQuery.isLoading || (!!jobId && !done) }
+}
 
-  const status = pollQuery.data?.status
-    ?? (submitQuery.isLoading ? 'queued' : submitQuery.isError ? 'failed' : undefined)
+// PREVIEW_QUALITY: the fast first pass shown while the refined job runs.
+const PREVIEW_QUALITY = -7
+
+export function useIsopycnalJob(
+  roi: ROI,
+  sigma0Value: number,
+  colorBy: ColorBy,
+  targetFaces: number | null = null,
+  enabled = true,
+) {
+  const isPreviewQuality = roi.quality >= PREVIEW_QUALITY
+
+  // Final-quality job — always submitted
+  const final = useSingleJob(roi, sigma0Value, colorBy, targetFaces, enabled, 'iso-final')
+
+  // Preview job — submitted concurrently when quality is better than preview.
+  // Uses quality -7 so the surface appears within ~3s while the fine job runs.
+  const previewROI: ROI = { ...roi, quality: PREVIEW_QUALITY }
+  const preview = useSingleJob(
+    previewROI, sigma0Value, colorBy, targetFaces,
+    !isPreviewQuality && enabled,  // skip if roi already IS preview quality
+    'iso-preview',
+  )
+
+  // Show the best available result: final mesh if ready, else preview
+  const mesh = final.mesh ?? preview.mesh
+  const isRefining = !isPreviewQuality && !!preview.mesh && !final.mesh
+
+  // Derive overall status for the status bar
+  const status = final.done
+    ? (final.mesh ? 'complete' : 'failed')
+    : isRefining ? 'refining'
+    : final.isLoading ? 'running'
+    : 'queued'
 
   return {
-    jobId,
+    jobId: final.jobId ?? null,
     status,
-    mesh: pollQuery.data?.status === 'complete' ? pollQuery.data.result : null,
-    error: pollQuery.data?.error ?? (submitQuery.error as Error | null)?.message ?? null,
-    isLoading:
-      submitQuery.isLoading ||
-      (!!jobId && status !== 'complete' && status !== 'failed'),
+    mesh,
+    isRefining,
+    error: null,
+    isLoading: !mesh && final.isLoading,
   }
 }
